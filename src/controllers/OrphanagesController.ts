@@ -1,6 +1,6 @@
 import { Request, response, Response } from 'express';
 import { getRepository } from 'typeorm';
-import Orphanage from '../model/Orphanage';
+import Orphanage from '../models/Orphanage';
 
 export default {
   //#region consulta
@@ -9,7 +9,9 @@ export default {
   async index(request: Request, response: Response) {
     const orphanagesRepository = getRepository(Orphanage);
 
-    const orphanages = await orphanagesRepository.find();
+    const orphanages = await orphanagesRepository.find({
+      relations: ['images']
+    });
 
     return response.json(orphanages);
   },
@@ -23,7 +25,9 @@ export default {
 
     const orphanagesRepository = getRepository(Orphanage);
 
-    const orphanage = await orphanagesRepository.findOneOrFail(id);
+    const orphanage = await orphanagesRepository.findOneOrFail(id, {
+      relations: ['images']
+    });
 
     return response.json(orphanage);
   },
@@ -33,9 +37,7 @@ export default {
   // de dados é preciso usar o async na chamada
   // e await no metodo save
   //#endregion
-  async create(request: Request, response: Response) {
-
-    
+  async create(request: Request, response: Response) {    
     const {
       name,
       latitude,
@@ -52,10 +54,12 @@ export default {
     // as Express.Multer.File[] = forca a declaracado do objeto
     // isso é um forma de reforço, para que não gere erro durante a compilação
     const requestImages = request.files as Express.Multer.File[];
+
     const images = requestImages.map(image => {
+      
       return { path: image.filename}
     });
-    
+
     // cria os dados (em memoria)
     const orphanage = orphanagesRepository.create({
       name,
@@ -65,8 +69,12 @@ export default {
       instructions,
       opening_hours,
       open_on_weekends,
-      images,
+      images
     });
+
+
+    console.log(orphanage);
+
 
     // salva os dados no banco de dados
     await orphanagesRepository.save(orphanage);
