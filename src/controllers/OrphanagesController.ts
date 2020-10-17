@@ -1,6 +1,7 @@
 import { Request, response, Response } from 'express';
 import { getRepository } from 'typeorm';
 import Orphanage from '../models/Orphanage';
+import OrphanagesView from '../views/orphanages_view';
 
 export default {
   //#region consulta
@@ -13,7 +14,7 @@ export default {
       relations: ['images']
     });
 
-    return response.json(orphanages);
+    return response.json(OrphanagesView.renderMany(orphanages));
   },
 
   //#region consulta pelo id
@@ -29,7 +30,7 @@ export default {
       relations: ['images']
     });
 
-    return response.json(orphanage);
+    return response.json(OrphanagesView.render(orphanage));
   },
 
   //#region cria novo registro
