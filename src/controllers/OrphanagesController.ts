@@ -1,5 +1,7 @@
 import { Request, response, Response } from 'express';
 import { getRepository } from 'typeorm';
+import * as Yup from 'yup';
+
 import Orphanage from '../models/Orphanage';
 import OrphanagesView from '../views/orphanages_view';
 
@@ -61,8 +63,9 @@ export default {
       return { path: image.filename}
     });
 
-    // cria os dados (em memoria)
-    const orphanage = orphanagesRepository.create({
+
+    // cria um objeto data
+    const data = {
       name,
       latitude,
       longitude,
@@ -71,11 +74,33 @@ export default {
       opening_hours,
       open_on_weekends,
       images
+    }
+
+    //cria objeto schema para validar os dados
+    const schema = Yup.object().shape({
+      name: Yup.string().required(),
+      latitude: Yup.number().required(),
+      longitude: Yup.number().required(),
+      about: Yup.string().required().max(300),
+      instructions: Yup.string().required(),
+      opening_hours: Yup.string().required(),
+      open_on_weekends: Yup.boolean().required(),
+      images: Yup.array(
+        Yup.object().shape({
+          path: Yup.string().required()
+        })
+      )
     });
 
+    // quando informado false, retorna todos os erros de uma unica vez
+    await schema.validate(data, {
+      abortEarly: false,
+    });
+    
+    // cria os dados (em memoria)
+    const orphanage = orphanagesRepository.create(data);
 
     console.log(orphanage);
-
 
     // salva os dados no banco de dados
     await orphanagesRepository.save(orphanage);
